@@ -206,7 +206,7 @@ for m, mouse in enumerate(mice):
         if expr_filter[n]:
             print(f"\tDataset: #{n} in subfolder {folder} -- done")
 
-    # filter the variable arrays to be only the lenght of weeks with data
+    # filter the variable arrays to be only the length of weeks with data
     # this makes sure that we don't have a week of empty values in our variable arrays
     weeks = np.array(sub_folders)[expr_filter]
     data = [d for i, d in enumerate(data) if expr_filter[i]]
@@ -252,23 +252,6 @@ for m, mouse in enumerate(mice):
         exec("del(%s)" % (v))
     print(mouse, "-- complete")
 print("Done")
-
-print("Cleaning...")
-del base_path
-del data
-del data_path
-del js
-del js_file
-del csv
-del mouse
-del video
-del v
-del m
-del n
-del expr_filter
-del folder
-del sub_folders
-del weeks
 
 
 # %%
@@ -361,21 +344,6 @@ for m, mouse in enumerate(mice):
 print("Done")
 
 # %%
-print("Cleaning...")
-del base_path
-del f
-del filename
-del mouse
-del m
-del n_weeks
-del w
-del week
-del v
-del weeks
-del week_filter
-del video_metadata
-
-# %%
 # set original data path
 if platform.system() == "Darwin":
     data_path = f"/Volumes/specialk_cs/2p/raw/"
@@ -440,7 +408,7 @@ for m, mouse in enumerate(mice):
         code = compile(f"{v} = [ _ for _ in range({n_weeks})]", "assign", "exec")
         exec(code, globals(), locals())
 
-    # iterate each frame in the SLEAP tracks
+    # iterate each week for which we have the SLEAP tracks
     for w in range(0, len(exprs[m]["tracking_locations"]), 1):
 
         # if the video exists and is processed
@@ -482,7 +450,6 @@ for m, mouse in enumerate(mice):
                 for f in range(
                     len(exprs[m]["tracking_locations"][w][:, i, 0, 0].tolist())
                 ):
-
                     # label frame with the specific mouse, week, frame, and timestamp
                     mouse_list[w].append(mouse)
                     week_list[w].append(w)
@@ -490,49 +457,10 @@ for m, mouse in enumerate(mice):
                     miliseconds = f * miliseconds_per_frame
                     timestamps[w].append(miliseconds)
 
-        print(
-            "\tWeek:", w, ": ms/frame:", miliseconds_per_frame, "-- done"
-        ) if week_filter[w] else print(f"No data for mouse {mice[m]} on week {w}")
+			print(
+				"\tWeek:", w, ": ms/frame:", miliseconds_per_frame, "-- done"
+			)
 
-    # filter out the weeks without data (using exec function for redundancy)
-    for v in [
-        "mouse_list",
-        "week_list",
-        "frame_list",
-        "timestamps",
-        "upper_eye_x",
-        "upper_eye_y",
-        "lower_eye_x",
-        "lower_eye_y",
-        "upper_ear_x",
-        "upper_ear_y",
-        "lower_ear_x",
-        "lower_ear_y",
-        "outer_ear_x",
-        "outer_ear_y",
-        "upper_whisker_x",
-        "upper_whisker_y",
-        "outer_whisker_x",
-        "outer_whisker_y",
-        "lower_whisker_x",
-        "lower_whisker_y",
-        "upper_mouth_x",
-        "upper_mouth_y",
-        "outer_mouth_x",
-        "outer_mouth_y",
-        "lower_mouth_x",
-        "lower_mouth_y",
-        "inner_nostril_x",
-        "inner_nostril_y",
-        "outer_nostril_x",
-        "outer_nostril_y",
-    ]:
-        executable = compile(
-            "%s = [d for i, d in enumerate(%s) if week_filter[i]]" % (v, v),
-            "filter",
-            "exec",
-        )
-        exec(executable, globals(), locals())
 
     # save the variable arrays to a dictionary with all the values
     for v in [
@@ -571,21 +499,6 @@ for m, mouse in enumerate(mice):
         exec("del(%s)" % (v))
     print(mouse, "-- complete")
 print("Done")
-
-# %%
-print("Cleaning...")
-del executable
-del i
-del m
-del miliseconds
-del miliseconds_per_frame
-del mouse
-del name
-del v
-del w
-
-# %%
-print(exprs[0]["ITIArray"][0])
 
 # %%
 if platform.system() == "Darwin":
@@ -633,8 +546,6 @@ for m, mouse in enumerate(mice):
         if w < len(exprs[m]["timestamps"]):
 
             print(f"\t\tWeek: {w} processing...")
-
-            week_filter[w] = True
 
             for i, trial in enumerate(exprs[m]["trialArray"][w]):
 
@@ -972,8 +883,6 @@ for m, mouse in enumerate(mice):
 
         del dataframe
 
-    data = [d for i, d in enumerate(data) if week_filter[i]]
-
     if len(data) > 0:
         data = pd.concat(data, keys=[w for w in range(len(data))])
         exprs[m]["trial_data_by_mouse"] = data.dropna(
@@ -1052,9 +961,6 @@ for m, mouse in enumerate(mice):
     n_weeks = len(exprs[m]["timestamps"])
 
     # create variable arrays with the length of weeks
-    week_filter = np.zeros(n_weeks, dtype=bool)
-
-    # create variable arrays with the length of weeks
     # create a list to store data from each week
     dataframe = [{} for _ in range(n_weeks)]
     data = [_ for _ in range(n_weeks)]
@@ -1078,8 +984,6 @@ for m, mouse in enumerate(mice):
 
                 dataframe[w][v] = exprs[m][v][w] - means
 
-                week_filter[w] = True
-
             else:
                 print(f"\terror mean centering mouse: {mouse}, dataset: {v}, week: {w}")
         for v in columns[0:3]:
@@ -1090,11 +994,7 @@ for m, mouse in enumerate(mice):
 
         print(
             "\tWeek:", w, "Num columns:", len(dataframe[w].keys()), "-- done"
-        ) if week_filter[w] else print(
-            f"\t\tDoes the data exist for mouse {mouse} on week {w}?"
         )
-
-    data = [d for i, d in enumerate(data) if week_filter[i]]
 
     data = pd.concat(data, keys=[w for w in range(len(data))])
     exprs[m]["data_by_mouse"] = data.dropna(
@@ -1182,36 +1082,11 @@ for m, mouse in enumerate(mice):
         ],
     )
 
-    del centered_data
-    del raw_data
-    del targets
-
     print(mouse, "-- complete")
 
 print("Done")
 
-# %%
-print("Cleaning...")
-del end
-del end_difference_array
-del end_index
-del i
-del led
-del led_end_array
-del led_start_array
-del m
-del mouse
-del n_weeks
-del speaker
-del start
-del start_difference_array
-del start_index
-del trial
-del trial_type
-del v
-del w
-del week_filter
-del weeks
+
 
 # %%
 # enumerate mice
@@ -1673,43 +1548,38 @@ for i in range(len(trial_type)):
 
 # %%
 # export data
-hf = h5py.File(
+with h5py.File(
     "/Users/annieehler/Projects/Jupyter_Notebooks/python_outputs/metadata.h5", "w"
-)
+) as hf:
 
-for m, mouse in enumerate(mice):
-    print(f"{mouse} -- saving metadata")
+	for m, mouse in enumerate(mice):
+		print(f"{mouse} -- saving metadata")
 
-    for key in list(exprs[m].keys()):
-        if type(exprs[m][key]) is list or type(exprs[m][key]) is np.array:
-            for w in range(len(exprs[m][key])):
+		for key in list(exprs[m].keys()):
+			if type(exprs[m][key]) is list or type(exprs[m][key]) is np.array:
+				for w in range(len(exprs[m][key])):
 
-                if type(exprs[m][key][w]) is list or type(exprs[m][key][w]) is np.array:
-                    hf.create_dataset(f"{mouse}/{w}/{key}", data=exprs[m][key][w])
+					if type(exprs[m][key][w]) is list or type(exprs[m][key][w]) is np.array:
+						hf.create_dataset(f"{mouse}/{w}/{key}", data=exprs[m][key][w])
 
-                if type(exprs[m][key][w]) is dict:
-                    g = hf.create_group(f"{mouse}/{w}/{key}")
-                    hdfdict.dump(data=exprs[m][key][w], hdf=g)
+					if type(exprs[m][key][w]) is dict:
+						g = hf.create_group(f"{mouse}/{w}/{key}")
+						hdfdict.dump(data=exprs[m][key][w], hdf=g)
 
-hf.close()
-
-hf = pd.HDFStore(
+with pd.HDFStore(
     "/Users/annieehler/Projects/Jupyter_Notebooks/python_outputs/datatables.h5", "a"
-)
-for m, mouse in enumerate(mice):
-    print(f"{mouse} -- saving datatables")
+) as hf:
+	for m, mouse in enumerate(mice):
+		print(f"{mouse} -- saving datatables")
 
-    for key in list(exprs[m].keys()):
-        if type(exprs[m][key]) is pd.DataFrame:
-            hf.put(f"{mouse}/{key}", exprs[m][key])
+		for key in list(exprs[m].keys()):
+			if type(exprs[m][key]) is pd.DataFrame:
+				hf.put(f"{mouse}/{key}", exprs[m][key])
 
-hf.close()
-hf = pd.HDFStore(
+
+with pd.HDFStore(
     "/Users/annieehler/Projects/Jupyter_Notebooks/python_outputs/data.h5", "a"
-)
-
-print(f"Saving concatenated data")
-for key in list(all_data_and_pcas.keys()):
-    hf.put(f"{key}", all_data_and_pcas[key])
-
-hf.close()
+) as hf:
+	print(f"Saving concatenated data")
+	for key in list(all_data_and_pcas.keys()):
+		hf.put(f"{key}", all_data_and_pcas[key])
