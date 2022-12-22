@@ -12,7 +12,7 @@ import h5py
 import hdfdict
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1d
+from scipy.interpolate import interp1dc
 from scipy.signal import savgol_filter
 from sklearn.decomposition import PCA
 
