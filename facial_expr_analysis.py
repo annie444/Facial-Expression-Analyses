@@ -12,7 +12,7 @@ import h5py
 import hdfdict
 import numpy as np
 import pandas as pd
-from scipy.interpolate import interp1dc
+from scipy.interpolate import interp1d
 from scipy.signal import savgol_filter
 from sklearn.decomposition import PCA
 
@@ -457,10 +457,7 @@ for m, mouse in enumerate(mice):
                     miliseconds = f * miliseconds_per_frame
                     timestamps[w].append(miliseconds)
 
-			print(
-				"\tWeek:", w, ": ms/frame:", miliseconds_per_frame, "-- done"
-			)
-
+            print("\tWeek:", w, ": ms/frame:", miliseconds_per_frame, "-- done")
 
     # save the variable arrays to a dictionary with all the values
     for v in [
@@ -543,8 +540,10 @@ for m, mouse in enumerate(mice):
         exprs[m]["timestamps"][w] = np.array(exprs[m]["timestamps"][w])
 
         # if the video data has been processed
-        if w < len(exprs[m]["timestamps"]):
+        if type(exprs[m]["timestamps"][w]) is list:
+            exprs[m]["timestamps"][w] = np.array(exprs[m]["timestamps"][w])
 
+        if type(exprs[m]["video_metadata"][w]) is dict:
             print(f"\t\tWeek: {w} processing...")
 
             for i, trial in enumerate(exprs[m]["trialArray"][w]):
@@ -992,9 +991,7 @@ for m, mouse in enumerate(mice):
         # Concatenate all numpy arrays into 'week' pandas dataframe
         data[w] = pd.DataFrame(dataframe[w], columns=columns)
 
-        print(
-            "\tWeek:", w, "Num columns:", len(dataframe[w].keys()), "-- done"
-        )
+        print("\tWeek:", w, "Num columns:", len(dataframe[w].keys()), "-- done")
 
     data = pd.concat(data, keys=[w for w in range(len(data))])
     exprs[m]["data_by_mouse"] = data.dropna(
@@ -1085,7 +1082,6 @@ for m, mouse in enumerate(mice):
     print(mouse, "-- complete")
 
 print("Done")
-
 
 
 # %%
@@ -1552,34 +1548,37 @@ with h5py.File(
     "/Users/annieehler/Projects/Jupyter_Notebooks/python_outputs/metadata.h5", "w"
 ) as hf:
 
-	for m, mouse in enumerate(mice):
-		print(f"{mouse} -- saving metadata")
+    for m, mouse in enumerate(mice):
+        print(f"{mouse} -- saving metadata")
 
-		for key in list(exprs[m].keys()):
-			if type(exprs[m][key]) is list or type(exprs[m][key]) is np.array:
-				for w in range(len(exprs[m][key])):
+        for key in list(exprs[m].keys()):
+            if type(exprs[m][key]) is list or type(exprs[m][key]) is np.array:
+                for w in range(len(exprs[m][key])):
 
-					if type(exprs[m][key][w]) is list or type(exprs[m][key][w]) is np.array:
-						hf.create_dataset(f"{mouse}/{w}/{key}", data=exprs[m][key][w])
+                    if (
+                        type(exprs[m][key][w]) is list
+                        or type(exprs[m][key][w]) is np.array
+                    ):
+                        hf.create_dataset(f"{mouse}/{w}/{key}", data=exprs[m][key][w])
 
-					if type(exprs[m][key][w]) is dict:
-						g = hf.create_group(f"{mouse}/{w}/{key}")
-						hdfdict.dump(data=exprs[m][key][w], hdf=g)
+                    if type(exprs[m][key][w]) is dict:
+                        g = hf.create_group(f"{mouse}/{w}/{key}")
+                        hdfdict.dump(data=exprs[m][key][w], hdf=g)
 
 with pd.HDFStore(
     "/Users/annieehler/Projects/Jupyter_Notebooks/python_outputs/datatables.h5", "a"
 ) as hf:
-	for m, mouse in enumerate(mice):
-		print(f"{mouse} -- saving datatables")
+    for m, mouse in enumerate(mice):
+        print(f"{mouse} -- saving datatables")
 
-		for key in list(exprs[m].keys()):
-			if type(exprs[m][key]) is pd.DataFrame:
-				hf.put(f"{mouse}/{key}", exprs[m][key])
+        for key in list(exprs[m].keys()):
+            if type(exprs[m][key]) is pd.DataFrame:
+                hf.put(f"{mouse}/{key}", exprs[m][key])
 
 
 with pd.HDFStore(
     "/Users/annieehler/Projects/Jupyter_Notebooks/python_outputs/data.h5", "a"
 ) as hf:
-	print(f"Saving concatenated data")
-	for key in list(all_data_and_pcas.keys()):
-		hf.put(f"{key}", all_data_and_pcas[key])
+    print(f"Saving concatenated data")
+    for key in list(all_data_and_pcas.keys()):
+        hf.put(f"{key}", all_data_and_pcas[key])
